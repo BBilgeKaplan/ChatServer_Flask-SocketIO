@@ -1,0 +1,122 @@
+{% extends 'base.html' %} {% block content %}
+<div class="message-box">
+  <h2>Chat Room: {{code}}</h2>
+  <div class="messages" id="messages"></div>
+  <div class="inputs">
+    <input type="text" rows="3" placeholder="Message" name="message" id="message"
+    />
+    <button class="btn btn-dark" type="button" name="send" id="send-btn" onClick="sendMessage()">
+      <i class="bi bi-send-fill"></i>
+    </button>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" id="Dosya" accept="image/*, audio/*">
+    <button class="btn btn-dark" type="button" onclick="uploadFile()">Yükle</button>
+  </form>
+  </div>
+</div>
+<script type="text/javascript">
+  var socketio = io();
+
+  const messages = document.getElementById("messages");
+
+  const createMessage = (name, msg) => {
+    const content = `
+    <div class="text">
+        <span>
+            <strong>${name}</strong>: ${msg}
+        </span>
+        <span class="muted">
+            ${new Date().toLocaleString()}
+        </span>
+    </div>
+    `;
+    messages.innerHTML += content;
+  };
+
+  socketio.on("message", (data) => {
+    createMessage(data.name, data.message);
+  });
+
+  const sendMessage = () => {
+    const message = document.getElementById("message");
+    if (message.value == "") return;
+    socketio.emit("message", { data: message.value });
+    message.value = "";
+  };
+
+  function uploadFile() {
+  var dosya = document.getElementById('Dosya').files[0];
+  var formData = new FormData();
+  formData.append('Dosya', dosya);
+
+  fetch('/upload', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Dosya yüklenirken bir hata oluştu.');
+    }
+    return response.text();
+  })
+  .then(data => {
+    console.log(data); // Sunucudan dönen yanıtı işleyebilirsiniz
+  })
+  .catch(error => {
+    console.error('Hata:', error);
+  });
+  
+  dosya.value = '';
+}
+
+socketio.on('dosya_geldi', function(data){
+    // var dosya_yolu = data.dosya_yolu;
+    var dosya_adi = data.dosya_adi;
+    var dosya_uzanti = dosya_adi.split('.').pop().toLowerCase();
+
+    // dosya_yolu = "\\"+ dosya_yolu;
+    // console.log(dosya_yolu)
+    // console.log(data.dosya_adi)
+    if (dosya_uzanti === "wav" || dosya_uzanti === "mp3") {
+      const content = `
+        <div class="text">
+          <span>
+            <strong>${data.name}</strong>: 
+            <audio controls>
+            <source src="uploads\/${data.dosya_adi}" type="audio/mpeg">
+            </audio>
+          </span>
+          <span class="muted">
+            ${new Date().toLocaleString()}
+          </span>
+        </div>
+        `;
+
+    var messages = document.getElementById('messages');
+    messages.innerHTML += content;
+    }
+
+    if (dosya_uzanti === "jpg" || dosya_uzanti === "jpeg" || dosya_uzanti === "png") {
+      const content = `
+        <div class="text">
+          <span>
+            <strong>${data.name}</strong>: 
+            <img src="uploads\/${data.dosya_adi}" class="rounded" style="width:350px">
+          </span>
+          <span class="muted">
+            ${new Date().toLocaleString()}
+        </span>
+        </div>
+        `;
+
+    var messages = document.getElementById('messages');
+    messages.innerHTML += content;
+    }
+  });
+
+</script>
+{% for msg in messages %}
+<script type="text/javascript">
+  createMessage("{{msg.name}}", "{{msg.message}}");
+</script>
+{% endfor %} {% endblock %}
