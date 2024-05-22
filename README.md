@@ -1,4 +1,4 @@
-# ChatServer Flask-SocketIO
+# Chat Server with Flask-SocketIO
 Bu proje basit bir gerçek zamanlı chat sunucusu geliştirmeyi hedeflemektedir, 
 Proje **Python** dilinde **Flask** ve **SocketIO** kullanarak geliştirilmiştir. 
 Projede sunucu, kullanıcıların aynı anda iletişim kurabileceği, anlık mesajlaşma özelliklerine sahip bir platform 
